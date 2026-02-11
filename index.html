@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سودازون - منصة التجارة الإلكترونية السودانية</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="logo">
+            <h1>سودازون</h1>
+        </div>
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="ابحث عن منتجات...">
+            <button onclick="searchProducts()">بحث</button>
+        </div>
+        <div class="nav-links">
+            <button onclick="navigateTo('home')" class="nav-btn active">الرئيسية</button>
+            <button onclick="navigateTo('seller')" class="nav-btn">بع على سودازون</button>
+            <button onclick="navigateTo('orders')" class="nav-btn">طلباتي</button>
+            <button onclick="navigateTo('admin')" class="nav-btn">التحكم</button>
+            <button onclick="toggleCart()" class="nav-btn cart-btn">
+                🛒 السلة (<span id="cartCount">0</span>)
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Home Page -->
+        <section id="home-page" class="page active">
+            <div class="hero-section">
+                <div class="hero-content">
+                    <h2>أهلا وسهلا بك في سودازون</h2>
+                    <p>منصتك الموثوقة للتسوق والبيع الإلكتروني في السودان</p>
+                    <div class="hero-buttons">
+                        <button onclick="navigateTo('home')" class="btn btn-primary">ابدأ التسوق</button>
+                        <button onclick="navigateTo('seller')" class="btn btn-secondary">هل تريد البيع؟</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="filters-section">
+                <h3>فرز والبحث</h3>
+                <select id="categoryFilter" onchange="filterByCategory()">
+                    <option value="">جميع الفئات</option>
+                    <option value="إلكترونيات">إلكترونيات</option>
+                    <option value="ملابس">ملابس</option>
+                    <option value="كتب">كتب</option>
+                    <option value="أثاث">أثاث</option>
+                    <option value="أخرى">أخرى</option>
+                </select>
+                <input type="range" id="priceFilter" min="0" max="10000" onchange="filterByPrice()" placeholder="السعر">
+            </div>
+
+            <div class="products-section">
+                <h3>المنتجات المتاحة</h3>
+                <div id="productsList" class="products-grid">
+                    <!-- Products will be loaded here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Product Details Page -->
+        <section id="product-detail-page" class="page">
+            <div class="breadcrumb">
+                <button onclick="navigateTo('home')" class="breadcrumb-btn">الرئيسية</button>
+                <span> / </span>
+                <span id="productDetailBreadcrumb">تفاصيل المنتج</span>
+            </div>
+            <div class="product-detail-container">
+                <div class="product-image">
+                    <img id="detailProductImage" src="" alt="صورة المنتج">
+                </div>
+                <div class="product-info">
+                    <h2 id="detailProductName"></h2>
+                    <div class="rating">
+                        <span id="productRating">⭐ 5/5</span>
+                    </div>
+                    <div class="price-section">
+                        <h3 id="detailProductPrice"></h3>
+                    </div>
+                    <p id="detailProductDescription"></p>
+                    <div class="quantity-selector">
+                        <label>الكمية:</label>
+                        <input type="number" id="productQuantity" value="1" min="1">
+                    </div>
+                    <div class="action-buttons">
+                        <button onclick="addToCart()" class="btn btn-primary">أضف إلى السلة</button>
+                        <button onclick="navigateTo('home')" class="btn btn-secondary">الرجوع</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Cart Page -->
+        <section id="cart-page" class="page">
+            <div class="breadcrumb">
+                <button onclick="navigateTo('home')" class="breadcrumb-btn">الرئيسية</button>
+                <span> / </span>
+                <span>سلة التسوق</span>
+            </div>
+            <h2>سلة التسوق</h2>
+            <div id="cartItems" class="cart-items-container">
+                <!-- Cart items will be displayed here -->
+            </div>
+            <div class="cart-summary">
+                <h3>ملخص الطلب</h3>
+                <div class="summary-row">
+                    <span>إجمالي السلعة:</span>
+                    <span id="subtotalDisplay">0 جنيه</span>
+                </div>
+                <div class="summary-row">
+                    <span>الضريبة:</span>
+                    <span id="taxDisplay">0 جنيه</span>
+                </div>
+                <div class="summary-row total">
+                    <span>الإجمالي:</span>
+                    <span id="totalDisplay">0 جنيه</span>
+                </div>
+                <button onclick="navigateTo('checkout')" class="btn btn-primary" style="width: 100%; margin-top: 20px;">
+                    الذهاب للدفع
+                </button>
+                <button onclick="navigateTo('home')" class="btn btn-secondary" style="width: 100%; margin-top: 10px;">
+                    المتابعة في التسوق
+                </button>
+            </div>
+        </section>
+
+        <!-- Checkout Page -->
+        <section id="checkout-page" class="page">
+            <div class="breadcrumb">
+                <button onclick="navigateTo('home')" class="breadcrumb-btn">الرئيسية</button>
+                <span> / </span>
+                <button onclick="navigateTo('cart')" class="breadcrumb-btn">السلة</button>
+                <span> / </span>
+                <span>إكمال الطلب</span>
+            </div>
+            <h2>إكمال الطلب</h2>
+            <div class="checkout-container">
+                <div class="checkout-form">
+                    <h3>معلومات التسليم</h3>
+                    <form id="checkoutForm">
+                        <div class="form-group">
+                            <label for="fullName">الاسم الكامل</label>
+                            <input type="text" id="fullName" required placeholder="أدخل اسمك الكامل">
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">رقم الهاتف</label>
+                            <input type="tel" id="phone" required placeholder="أدخل رقم هاتفك">
+                        </div>
+                        <div class="form-group">
+                            <label for="email">البريد الإلكتروني</label>
+                            <input type="email" id="email" required placeholder="أدخل بريدك الإلكتروني">
+                        </div>
+                        <div class="form-group">
+                            <label for="address">العنوان</label>
+                            <textarea id="address" required placeholder="أدخل عنوانك بالتفصيل"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="state">الولاية</label>
+                            <input type="text" id="state" required placeholder="أدخل الولاية">
+                        </div>
+
+                        <h3 style="margin-top: 30px;">طريقة الدفع</h3>
+                        <div class="form-group">
+                            <label>
+                                <input type="radio" name="paymentMethod" value="cash" checked> عند الاستقبال
+                            </label>
+                            <label>
+                                <input type="radio" name="paymentMethod" value="online"> تحويل بنكي
+                            </label>
+                        </div>
+
+                        <h3 style="margin-top: 30px;">ملاحظات الطلب</h3>
+                        <div class="form-group">
+                            <textarea id="orderNotes" placeholder="أضف ملاحظاتك (اختياري)"></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 20px;">
+                            إكمال الطلب
+                        </button>
+                    </form>
+                </div>
+
+                <div class="checkout-summary">
+                    <h3>ملخص الطلب</h3>
+                    <div id="checkoutItems" class="checkout-items">
+                        <!-- Items will be displayed here -->
+                    </div>
+                    <div class="summary-row">
+                        <span>الإجمالي:</span>
+                        <span id="checkoutTotal">0 جنيه</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Orders Tracking Page -->
+        <section id="orders-page" class="page">
+            <div class="breadcrumb">
+                <button onclick="navigateTo('home')" class="breadcrumb-btn">الرئيسية</button>
+                <span> / </span>
+                <span>تتبع طلباتي</span>
+            </div>
+            <h2>تتبع طلباتك</h2>
+            <div id="ordersList" class="orders-list-container">
+                <!-- Orders will be displayed here -->
+            </div>
+            <p style="text-align: center; margin-top: 30px;" id="noOrdersMessage">لا توجد طلبات حتى الآن</p>
+        </section>
+
+        <!-- Seller Registration Page -->
+        <section id="seller-page" class="page">
+            <div class="breadcrumb">
+                <button onclick="navigateTo('home')" class="breadcrumb-btn">الرئيسية</button>
+                <span> / </span>
+                <span>بع على سودازون</span>
+            </div>
+            <h2>بع على سودازون</h2>
+            <div class="seller-content">
+                <div class="seller-info">
+                    <h3>لماذا تبيع على سودازون؟</h3>
+                    <ul>
+                        <li>📊 وصول إلى ملايين العملاء في السودان</li>
+                        <li>💰 عمولة منخفضة وسحب الأرباح السهل</li>
+                        <li>🛡️ حماية كاملة للبائع والمشتري</li>
+                        <li>📱 أدوات بيع متقدمة وسهلة الاستخدام</li>
+                        <li>💬 دعم عملاء متميز 24/7</li>
+                    </ul>
+                </div>
+
+                <form id="sellerForm" class="seller-form">
+                    <h3>معلومات البائع</h3>
+                    <div class="form-group">
+                        <label for="sellerName">اسم المتجر</label>
+                        <input type="text" id="sellerName" required placeholder="اسم متجرك">
+                    </div>
+                    <div class="form-group">
+                        <label for="sellerPhone">رقم الهاتف</label>
+                        <input type="tel" id="sellerPhone" required placeholder="رقم هاتفك">
+                    </div>
+                    <div class="form-group">
+                        <label for="sellerEmail">البريد الإلكتروني</label>
+                        <input type="email" id="sellerEmail" required placeholder="بريدك الإلكتروني">
+                    </div>
+                    <div class="form-group">
+                        <label for="sellerAddress">العنوان</label>
+                        <textarea id="sellerAddress" required placeholder="عنوان متجرك"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="sellerCategory">فئة المنتجات</label>
+                        <select id="sellerCategory" required>
+                            <option value="">اختر الفئة</option>
+                            <option value="إلكترونيات">إلكترونيات</option>
+                            <option value="ملابس">ملابس</option>
+                            <option value="كتب">كتب</option>
+                            <option value="أثاث">أثاث</option>
+                            <option value="أخرى">أخرى</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="sellerDescription">وصف النشاط</label>
+                        <textarea id="sellerDescription" required placeholder="أخبرنا عن نشاطك"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                        إرسال طلب الانضمام
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Admin Panel -->
+        <section id="admin-page" class="page">
+            <div class="breadcrumb">
+                <button onclick="navigateTo('home')" class="breadcrumb-btn">الرئيسية</button>
+                <span> / </span>
+                <span>لوحة التحكم</span>
+            </div>
+            <h2>لوحة التحكم</h2>
+            <div class="admin-tabs">
+                <button onclick="showAdminTab('products')" class="tab-btn active">إدارة المنتجات</button>
+                <button onclick="showAdminTab('stats')" class="tab-btn">الإحصائيات</button>
+                <button onclick="showAdminTab('sellers')" class="tab-btn">طلبات البائعين</button>
+            </div>
+
+            <!-- Products Management Tab -->
+            <div id="admin-products" class="admin-tab active">
+                <h3>إدارة المنتجات</h3>
+                <button onclick="showProductForm()" class="btn btn-primary" style="margin-bottom: 20px;">
+                    + إضافة منتج جديد
+                </button>
+
+                <div id="productForm" class="admin-form" style="display: none;">
+                    <h4>نموذج المنتج</h4>
+                    <form id="addProductForm">
+                        <div class="form-group">
+                            <label for="productName">اسم المنتج</label>
+                            <input type="text" id="productName" required placeholder="اسم المنتج">
+                        </div>
+                        <div class="form-group">
+                            <label for="productPrice">السعر</label>
+                            <input type="number" id="productPrice" required placeholder="السعر بالجنيه">
+                        </div>
+                        <div class="form-group">
+                            <label for="productCategory">الفئة</label>
+                            <select id="productCategory" required>
+                                <option value="">اختر الفئة</option>
+                                <option value="إلكترونيات">إلكترونيات</option>
+                                <option value="ملابس">ملابس</option>
+                                <option value="كتب">كتب</option>
+                                <option value="أثاث">أثاث</option>
+                                <option value="أخرى">أخرى</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="productDescription">الوصف</label>
+                            <textarea id="productDescription" required placeholder="وصف المنتج"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="productStock">الكمية المتوفرة</label>
+                            <input type="number" id="productStock" required placeholder="الكمية">
+                        </div>
+                        <div class="form-group">
+                            <label for="productImage">صورة المنتج</label>
+                            <input type="file" id="productImage" accept="image/*" required>
+                            <small>اقصى حجم: 2MB</small>
+                        </div>
+                        <button type="submit" class="btn btn-primary">حفظ المنتج</button>
+                        <button type="button" class="btn btn-secondary" onclick="hideProductForm()">إلغاء</button>
+                    </form>
+                </div>
+
+                <table class="products-table">
+                    <thead>
+                        <tr>
+                            <th>الصورة</th>
+                            <th>الاسم</th>
+                            <th>السعر</th>
+                            <th>الفئة</th>
+                            <th>الكمية</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminProductsList">
+                        <!-- Products will be listed here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Statistics Tab -->
+            <div id="admin-stats" class="admin-tab">
+                <h3>الإحصائيات</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h4>إجمالي المنتجات</h4>
+                        <p id="totalProducts">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4>إجمالي الطلبات</h4>
+                        <p id="totalOrders">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4>إجمالي المبيعات</h4>
+                        <p id="totalSales">0 جنيه</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4>عدد البائعين</h4>
+                        <p id="totalSellers">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sellers Tab -->
+            <div id="admin-sellers" class="admin-tab">
+                <h3>طلبات البائعين</h3>
+                <table class="sellers-table">
+                    <thead>
+                        <tr>
+                            <th>اسم المتجر</th>
+                            <th>رقم الهاتف</th>
+                            <th>البريد الإلكتروني</th>
+                            <th>الفئة</th>
+                            <th>التاريخ</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sellerRequestsList">
+                        <!-- Seller requests will be listed here -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- About Page -->
+        <section id="about-page" class="page">
+            <div class="breadcrumb">
+                <button onclick="navigateTo('home')" class="breadcrumb-btn">الرئيسية</button>
+                <span> / </span>
+                <span>عن سودازون</span>
+            </div>
+            <h2>عن سودازون</h2>
+            <div class="about-content">
+                <div class="about-section">
+                    <h3>من نحن</h3>
+                    <p>نحن شباب السودان منه وإليه. سودازون هي منصة تجارة إلكترونية وطنية تهدف إلى تمكين رواد الأعمال والمتاجر السودانية وتسهيل عملية البيع والشراء للعملاء في جميع أنحاء السودان.</p>
+                </div>
+                <div class="about-section">
+                    <h3>رؤيتنا</h3>
+                    <p>أن نكون المنصة الأولى والموثوقة للتجارة الإلكترونية في السودان، ونساهم في تنمية الاقتصاد الرقمي والمحلي.</p>
+                </div>
+                <div class="about-section">
+                    <h3>قيمنا</h3>
+                    <ul>
+                        <li><strong>الثقة:</strong> نضمن سلامة المعاملات والبيانات</li>
+                        <li><strong>الجودة:</strong> نقدم أفضل الخدمات والمنتجات</li>
+                        <li><strong>الابتكار:</strong> نطور حلولاً جديدة لتحسين التجربة</li>
+                        <li><strong>الاحترافية:</strong> نعامل عملاؤنا وبائعونا باحترام</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Us Page -->
+        <section id="contact-page" class="page">
+            <div class="breadcrumb">
+                <button onclick="navigateTo('home')" class="breadcrumb-btn">الرئيسية</button>
+                <span> / </span>
+                <span>اتصل بنا</span>
+            </div>
+            <h2>اتصل بنا</h2>
+            <div class="contact-container">
+                <div class="contact-info">
+                    <h3>معلومات التواصل</h3>
+                    <div class="contact-item">
+                        <h4>📞 الهاتف (واتساب)</h4>
+                        <a href="https://wa.me/201556569749" target="_blank">+20 1556569749</a>
+                        <p>اضغط هنا للتواصل معنا على الواتساب</p>
+                    </div>
+                    <div class="contact-item">
+                        <h4>📧 البريد الإلكتروني</h4>
+                        <a href="mailto:netnookhi@gmail.com">netnookhi@gmail.com</a>
+                        <p>أرسل لنا بريد إلكتروني بأي استفسار</p>
+                    </div>
+                    <div class="contact-item">
+                        <h4>🕐 ساعات العمل</h4>
+                        <p>السبت - الخميس: من 9:00 صباحاً إلى 6:00 مساءً</p>
+                        <p>الجمعة: من 12:00 ظهراً إلى 6:00 مساءً</p>
+                    </div>
+                </div>
+
+                <form id="contactForm" class="contact-form">
+                    <h3>نموذج الاتصال</h3>
+                    <div class="form-group">
+                        <label for="contactName">اسمك</label>
+                        <input type="text" id="contactName" required placeholder="أدخل اسمك">
+                    </div>
+                    <div class="form-group">
+                        <label for="contactEmail">بريدك الإلكتروني</label>
+                        <input type="email" id="contactEmail" required placeholder="أدخل بريدك الإلكتروني">
+                    </div>
+                    <div class="form-group">
+                        <label for="contactPhone">رقم هاتفك</label>
+                        <input type="tel" id="contactPhone" placeholder="أدخل رقم هاتفك">
+                    </div>
+                    <div class="form-group">
+                        <label for="contactSubject">الموضوع</label>
+                        <input type="text" id="contactSubject" required placeholder="موضوع استفسارك">
+                    </div>
+                    <div class="form-group">
+                        <label for="contactMessage">الرسالة</label>
+                        <textarea id="contactMessage" required placeholder="أكتب رسالتك"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">إرسال الرسالة</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Privacy Policy Page -->
+        <section id="privacy-page" class="page">
+            <div class="breadcrumb">
+                <button onclick="navigateTo('home')" class="breadcrumb-btn">الرئيسية</button>
+                <span> / </span>
+                <span>سياسة الخصوصية</span>
+            </div>
+            <h2>سياسة الخصوصية</h2>
+            <div class="policy-content">
+                <h3>1. جمع المعلومات</h3>
+                <p>نحن نجمع معلومات شخصية مثل الاسم والبريد الإلكتروني ورقم الهاتف والعنوان عند تسجيلك على الموقع أو عند إتمامك عملية شراء.</p>
+
+                <h3>2. استخدام المعلومات</h3>
+                <p>نستخدم معلوماتك الشخصية لـ:</p>
+                <ul>
+                    <li>معالجة طلباتك وتسليم المنتجات</li>
+                    <li>تحسين خدماتنا</li>
+                    <li>التواصل معك بخصوص طلباتك</li>
+                    <li>إرسال عروض وإخطارات (يمكنك الاشتراك وإلغاء الاشتراك في أي وقت)</li>
+                </ul>
+
+                <h3>3. حماية المعلومات</h3>
+                <p>نلتزم بحماية المعلومات الشخصية لك وننشر تدابير أمان قوية.</p>
+
+                <h3>4. المشاركة مع أطراف ثالثة</h3>
+                <p>لن نشارك معلوماتك مع أطراف ثالثة بدون إذنك إلا إذا كان ذلك ضرورياً لإتمام معاملتك.</p>
+
+                <h3>5. ملفات تعريف الارتباط</h3>
+                <p>يستخدم موقعنا ملفات تعريف ارتباط لتحسين تجربتك. يمكنك تعطيل ملفات تعريف الارتباط من إعدادات متصفحك.</p>
+
+                <h3>6. تحديث السياسة</h3>
+                <p>نحتفظ بالحق في تحديث هذه السياسة في أي وقت. سيتم إخطارك بأي تغييرات من خلال البريد الإلكتروني.</p>
+
+                <h3>7. التواصل</h3>
+                <p>إذا كان لديك أي أسئلة حول سياسة الخصوصية، يرجى التواصل معنا على البريد الإلكتروني أو الواتساب.</p>
+            </div>
+        </section>
+
+        <!-- Terms of Service Page -->
+        <section id="terms-page" class="page">
+            <div class="breadcrumb">
+                <button onclick="navigateTo('home')" class="breadcrumb-btn">الرئيسية</button>
+                <span> / </span>
+                <span>شروط الخدمة</span>
+            </div>
+            <h2>شروط الخدمة</h2>
+            <div class="policy-content">
+                <h3>1. الاتفاق العام</h3>
+                <p>باستخدامك لموقع سودازون، فإنك توافق على شروط الخدمة هذه. إذا لم توافق على هذه الشروط، يرجى عدم استخدام الموقع.</p>
+
+                <h3>2. استخدام الموقع</h3>
+                <p>يجب عليك استخدام الموقع فقط للأغراض القانونية والمشروعة. لا تستخدم الموقع في الأنشطة غير القانونية أو الضارة.</p>
+
+                <h3>3. حقوق الملكية الفكرية</h3>
+                <p>جميع محتويات الموقع بما في ذلك النصوص والصور والشعارات محمية بحقوق الملكية الفكرية. لا يمكنك نسخ أو توزيع المحتوى دون إذن.</p>
+
+                <h3>4. المسؤولية عن المنتجات</h3>
+                <ul>
+                    <li>البائعون مسؤولون عن دقة وجودة المنتجات المعروضة</li>
+                    <li>سودازون تتحقق من المنتجات لكن لا تتحمل مسؤولية كاملة عن أي عيوب</li>
+                    <li>يحق للمشتري استرجاع المنتج إذا لم يطابق الوصف</li>
+                </ul>
+
+                <h3>5. سياسة الاسترجاع والاستبدال</h3>
+                <p>المشترون لهم الحق في استرجاع المنتج خلال 7 أيام من التسلم إذا كان المنتج معيباً أو لم يطابق الوصف.</p>
+
+                <h3>6. المسؤولية والتبرؤ من الضمان</h3>
+                <p>سودازون لا تضمن خلو الموقع من الأخطاء أو التوقف. الموقع يُقدم على أساس "كما هو".</p>
+
+                <h3>7. تحديد المسؤولية</h3>
+                <p>في أي حال، لن تتحمل سودازون مسؤولية عن أي أضرار غير مباشرة أو عرضية.</p>
+
+                <h3>8. التعديلات على الشروط</h3>
+                <p>نحتفظ بالحق في تعديل هذه الشروط في أي وقت. التعديلات تسري فوراً.</p>
+            </div>
+        </section>
+
+        <!-- FAQ Page -->
+        <section id="faq-page" class="page">
+            <div class="breadcrumb">
+                <button onclick="navigateTo('home')" class="breadcrumb-btn">الرئيسية</button>
+                <span> / </span>
+                <span>الأسئلة الشائعة</span>
+            </div>
+            <h2>الأسئلة الشائعة</h2>
+            <div class="faq-container">
+                <div class="faq-item">
+                    <button class="faq-question" onclick="toggleFAQ(this)">
+                        <span>كيف أشتري منتجاً من سودازون؟</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-answer" style="display: none;">
+                        <p>1. تصفح المنتجات المتاحة من الصفحة الرئيسية</p>
+                        <p>2. اختر المنتج الذي تريده وأضفه إلى السلة</p>
+                        <p>3. اذهب إلى السلة وأكمل عملية الشراء</p>
+                        <p>4. ملء معلومات التسليم والدفع</p>
+                        <p>5. تأكيد الطلب والانتظار للتسليم</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question" onclick="toggleFAQ(this)">
+                        <span>ما هي طرق الدفع المتاحة؟</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-answer" style="display: none;">
+                        <p>نحن نقبل:</p>
+                        <p>• الدفع عند الاستقبال (كاش)</p>
+                        <p>• التحويل البنكي</p>
+                        <p>جميع الطرق آمنة وموثوقة</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question" onclick="toggleFAQ(this)">
+                        <span>كم تستغرق فترة التسليم؟</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-answer" style="display: none;">
+                        <p>فترة التسليم تختلف حسب الموقع وحالة المرور:</p>
+                        <p>• داخل الخرطوم: 1-2 يوم عمل</p>
+                        <p>• خارج الخرطوم: 3-7 أيام عمل</p>
+                        <p>يمكنك تتبع طلبك من صفحة "طلباتي"</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question" onclick="toggleFAQ(this)">
+                        <span>هل يمكن استرجاع المنتج؟</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-answer" style="display: none;">
+                        <p>نعم، يمكنك استرجاع المنتج في الحالات التالية:</p>
+                        <p>• المنتج معيب أو لا يعمل</p>
+                        <p>• المنتج لم يطابق الوصف</p>
+                        <p>يجب تقديم طلب الاسترجاع خلال 7 أيام من التسلم</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question" onclick="toggleFAQ(this)">
+                        <span>كيف أبدأ البيع على سودازون؟</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-answer" style="display: none;">
+                        <p>1. انقر على "بع على سودازون" من القائمة الرئيسية</p>
+                        <p>2. ملء نموذج التسجيل بمعلوماتك</p>
+                        <p>3. انتظر موافقتنا على طلبك</p>
+                        <p>4. بعد الموافقة، يمكنك إضافة منتجاتك وبدء البيع</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question" onclick="toggleFAQ(this)">
+                        <span>ما هي نسبة العمولة؟</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-answer" style="display: none;">
+                        <p>نسبة العمولة تختلف حسب فئة المنتج:</p>
+                        <p>• الإلكترونيات: 10%</p>
+                        <p>• الملابس: 8%</p>
+                        <p>• الكتب: 5%</p>
+                        <p>• الأثاث: 12%</p>
+                        <p>• أخرى: 10%</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question" onclick="toggleFAQ(this)">
+                        <span>كيف أتواصل مع خدمة العملاء؟</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-answer" style="display: none;">
+                        <p>يمكنك التواصل معنا عبر:</p>
+                        <p>• الواتساب: +20 1556569749</p>
+                        <p>• البريد الإلكتروني: netnookhi@gmail.com</p>
+                        <p>• نموذج الاتصال في صفحة "اتصل بنا"</p>
+                        <p>ساعات العمل: السبت - الخميس 9 صباحاً - 6 مساءً</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Customer Service Page -->
+        <section id="service-page" class="page">
+            <div class="breadcrumb">
+                <button onclick="navigateTo('home')" class="breadcrumb-btn">الرئيسية</button>
+                <span> / </span>
+                <span>خدمة العملاء</span>
+            </div>
+            <h2>خدمة العملاء</h2>
+            <div class="service-container">
+                <div class="service-section">
+                    <h3>كيف يمكننا مساعدتك؟</h3>
+                    <div class="service-buttons">
+                        <button class="service-btn" onclick="navigateTo('faq')">
+                            <span>❓ الأسئلة الشائعة</span>
+                            <p>إجابات سريعة للأسئلة الشائعة</p>
+                        </button>
+                        <button class="service-btn" onclick="navigateTo('contact')">
+                            <span>📞 اتصل بنا</span>
+                            <p>تواصل معنا مباشرة</p>
+                        </button>
+                        <button class="service-btn" onclick="navigateTo('orders')">
+                            <span>📦 تتبع الطلبات</span>
+                            <p>تحقق من حالة طلبك</p>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="service-section">
+                    <h3>مركز الدعم</h3>
+                    <div class="support-info">
+                        <h4>الشكاوى والاقتراحات</h4>
+                        <p>إذا كان لديك شكوى أو اقتراح، يرجى التواصل معنا من خلال:</p>
+                        <ul>
+                            <li>📧 البريد الإلكتروني: netnookhi@gmail.com</li>
+                            <li>📱 الواتساب: +20 1556569749</li>
+                        </ul>
+                        <p style="margin-top: 20px;">نحن نتعامل مع جميع الشكاوى بجدية ونسعى لحلها في أسرع وقت.</p>
+                    </div>
+                </div>
+
+                <div class="service-section">
+                    <h3>سياسة الاسترجاع والاستبدال</h3>
+                    <p><strong>مدة الاسترجاع:</strong> 7 أيام من تاريخ التسلم</p>
+                    <p><strong>شروط الاسترجاع:</strong></p>
+                    <ul>
+                        <li>المنتج لم يُستخدم أو محفوظ بحالته الأصلية</li>
+                        <li>المنتج معيب أو لا يطابق الوصف</li>
+                        <li>يجب الاتصال بخدمة العملاء أولاً</li>
+                    </ul>
+                    <p style="margin-top: 20px;"><strong>رسوم الاسترجاع:</strong> يتحمل البائع تكاليف الاسترجاع</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Partner Program Page -->
+        <section id="partner-page" class="page">
+            <div class="breadcrumb">
+                <button onclick="navigateTo('home')" class="breadcrumb-btn">الرئيسية</button>
+                <span> / </span>
+                <span>كن شريكاً</span>
+            </div>
+            <h2>كن شريكاً معنا</h2>
+            <div class="partner-content">
+                <div class="partner-section">
+                    <h3>برنامج الشركات التابعة</h3>
+                    <p>انضم إلى برنامج التسويق بالعمولة من سودازون وكسب المال من الإحالات.</p>
+                    <h4>المميزات:</h4>
+                    <ul>
+                        <li>💰 عمولة تصل إلى 20% من قيمة كل عملية بيع</li>
+                        <li>📊 لوحة تحكم متقدمة لتتبع أرباحك</li>
+                        <li>🔗 روابط فريدة وسهلة المشاركة</li>
+                        <li>📈 دعم تسويقي احترافي</li>
+                        <li>💳 سحب الأرباح بسهولة</li>
+                    </ul>
+                </div>
+
+                <form id="partnerForm" class="partner-form">
+                    <h3>انضم لبرنامج الشركات التابعة</h3>
+                    <div class="form-group">
+                        <label for="partnerName">الاسم</label>
+                        <input type="text" id="partnerName" required placeholder="اسمك الكامل">
+                    </div>
+                    <div class="form-group">
+                        <label for="partnerEmail">البريد الإلكتروني</label>
+                        <input type="email" id="partnerEmail" required placeholder="بريدك الإلكتروني">
+                    </div>
+                    <div class="form-group">
+                        <label for="partnerPhone">رقم الهاتف</label>
+                        <input type="tel" id="partnerPhone" required placeholder="رقم هاتفك">
+                    </div>
+                    <div class="form-group">
+                        <label for="partnerWebsite">موقعك أو حسابك على وسائل التواصل</label>
+                        <input type="text" id="partnerWebsite" placeholder="إذا كان لديك">
+                    </div>
+                    <div class="form-group">
+                        <label for="partnerStrategy">كيف تخطط للتسويق؟</label>
+                        <textarea id="partnerStrategy" required placeholder="اخبرنا عن خطتك التسويقية"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                        تقدم بطلبك الآن
+                    </button>
+                </form>
+            </div>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>عن سودازون</h4>
+                <a href="#" onclick="navigateTo('about'); return false;">من نحن</a>
+                <a href="#" onclick="navigateTo('partner'); return false;">كن شريكاً</a>
+                <a href="#" onclick="navigateTo('seller'); return false;">بع على سودازون</a>
+            </div>
+            <div class="footer-section">
+                <h4>الدعم والمساعدة</h4>
+                <a href="#" onclick="navigateTo('service'); return false;">خدمة العملاء</a>
+                <a href="#" onclick="navigateTo('faq'); return false;">الأسئلة الشائعة</a>
+                <a href="#" onclick="navigateTo('contact'); return false;">اتصل بنا</a>
+            </div>
+            <div class="footer-section">
+                <h4>السياسات والشروط</h4>
+                <a href="#" onclick="navigateTo('privacy'); return false;">سياسة الخصوصية</a>
+                <a href="#" onclick="navigateTo('terms'); return false;">شروط الخدمة</a>
+            </div>
+            <div class="footer-section">
+                <h4>معلومات التواصل</h4>
+                <a href="https://wa.me/201556569749" target="_blank">📱 واتساب</a>
+                <a href="mailto:netnookhi@gmail.com">📧 البريد الإلكتروني</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2026 سودازون. جميع الحقوق محفوظة.</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
