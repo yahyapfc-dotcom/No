@@ -3,8 +3,12 @@ const WA_NUMBER = '201556569749';
 const STORAGE_PRODUCTS = 'soodazon_products';
 const STORAGE_CART = 'soodazon_cart';
 const STORAGE_ORDERS = 'soodazon_orders';
+const STORAGE_SELLERS = 'soodazon_sellers';
+const STORAGE_SELLER_PRODUCTS = 'soodazon_seller_products';
 const ADMIN_SESSION = 'soodazon_admin_logged';
 const ADMIN_PWD_KEY = 'soodazon_admin_pwd';
+const SELLER_SESSION = 'soodazon_seller_logged';
+const SELLER_ID_KEY = 'soodazon_seller_id';
 
 function initApp() {
     // ensure default admin password exists (changeable via console/localStorage)
@@ -13,6 +17,13 @@ function initApp() {
     if (!localStorage.getItem(STORAGE_PRODUCTS)) localStorage.setItem(STORAGE_PRODUCTS, JSON.stringify([]));
     if (!localStorage.getItem(STORAGE_CART)) localStorage.setItem(STORAGE_CART, JSON.stringify([]));
     if (!localStorage.getItem(STORAGE_ORDERS)) localStorage.setItem(STORAGE_ORDERS, JSON.stringify([]));
+    if (!localStorage.getItem(STORAGE_SELLERS)) localStorage.setItem(STORAGE_SELLERS, JSON.stringify([]));
+    if (!localStorage.getItem(STORAGE_SELLER_PRODUCTS)) localStorage.setItem(STORAGE_SELLER_PRODUCTS, JSON.stringify({}));
+
+    // Check if seller is logged in
+    if(isSellerLoggedIn()){
+        loadSellerDashboard();
+    }
 
     // push history state to intercept back button
     history.replaceState({page: 'home'}, '');
@@ -31,6 +42,9 @@ function initApp() {
     document.getElementById('sellerForm').addEventListener('submit', handleSellerForm);
     document.getElementById('contactForm').addEventListener('submit', handleContactForm);
     document.getElementById('partnerForm').addEventListener('submit', handlePartnerForm);
+    document.getElementById('sellerLoginForm').addEventListener('submit', handleSellerLogin);
+    document.getElementById('sellerAddProductForm').addEventListener('submit', handleSellerAddProduct);
+    document.getElementById('sellerSettingsForm').addEventListener('submit', handleSellerSettings);
 
     loadProducts();
     renderProducts();
@@ -304,6 +318,7 @@ function saveNewProduct(p){
     document.getElementById('addProductForm').reset();
     renderProducts(); renderAdminProducts();
     alert('تم إضافة المنتج');
+    navigateTo('home');
 }
 
 function renderAdminProducts(){
@@ -350,17 +365,7 @@ function deleteProduct(id){
 
 // Seller form - open WhatsApp with info
 function handleSellerForm(e){
-    e.preventDefault();
-    const name = document.getElementById('sellerName').value.trim();
-    const phone = document.getElementById('sellerPhone').value.trim();
-    const email = document.getElementById('sellerEmail').value.trim();
-    const address = document.getElementById('sellerAddress').value.trim();
-    const category = document.getElementById('sellerCategory').value;
-    const desc = document.getElementById('sellerDescription').value.trim();
-    const msg = `طلب انضمام بائع%0Aالاسم: ${encodeURIComponent(name)}%0Aالهاتف: ${encodeURIComponent(phone)}%0Aالبريد: ${encodeURIComponent(email)}%0Aالفئة: ${encodeURIComponent(category)}%0Aالوصف: ${encodeURIComponent(desc)}%0Aالعنوان: ${encodeURIComponent(address)}`;
-    window.open(`https://wa.me/${WA_NUMBER}?text=${msg}`, '_blank');
-    alert('تم إرسال معلوماتك إلى رقم الواتساب. سنتواصل معك سريعاً.');
-    e.target.reset();
+    return handleSellerFormOriginal(e);
 }
 
 function handleContactForm(e){
@@ -385,6 +390,453 @@ function handlePartnerForm(e){
     window.open(`https://wa.me/${WA_NUMBER}?text=${msg}`, '_blank');
     alert('تم إرسال طلب الشراكة إلى الواتساب. سنعاود الاتصال بك.');
     e.target.reset();
+}
+
+// MISSING FUNCTIONS
+function toggleCart(){
+    const cartPage = document.getElementById('cart-page');
+    if(cartPage && cartPage.classList.contains('active')){
+        navigateTo('home');
+    } else {
+        navigateTo('cart');
+    }
+}
+
+function showAdminTab(tab){
+    const tabs = document.querySelectorAll('.admin-tab');
+    tabs.forEach(t=>t.classList.remove('active'));
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    tabBtns.forEach(b=>b.classList.remove('active'));
+    const activeTab = document.getElementById('admin-' + tab);
+    if(activeTab) activeTab.classList.add('active');
+    const activeBtn = Array.from(tabBtns).find(b=>b.textContent.includes(tab==='products'?'المنتجات':tab==='stats'?'الإحصائيات':'البائعين'));
+    if(activeBtn) activeBtn.classList.add('active');
+}
+
+function toggleFAQ(btn){
+    const answer = btn.nextElementSibling;
+    const icon = btn.querySelector('.faq-icon');
+    if(answer && answer.style.display === 'none'){
+        answer.style.display = 'block';
+        if(icon) icon.textContent = '−';
+    } else {
+        if(answer) answer.style.display = 'none';
+        if(icon) icon.textContent = '+';
+    }
+}
+
+function filterByCategory(){
+    const category = document.getElementById('categoryFilter').value;
+    const products = loadProducts();
+    const list = document.getElementById('productsList');
+    list.innerHTML='';
+    const filtered = category ? products.filter(p=>p.category===category) : products;
+    if(!filtered.length){
+        list.innerHTML = '<p>لا توجد منتجات في هذه الفئة</p>';
+        return;
+    }
+    filtered.forEach(p=>{
+        const card = document.createElement('div'); card.className='product-card';
+        card.innerHTML = `
+            <div class="product-image-container"><img src="${p.image || ''}" alt="${escapeHtml(p.name)}"></div>
+            <div class="product-info-card">
+                <div class="product-name">${escapeHtml(p.name)}</div>
+                <div class="product-category">${escapeHtml(p.category)}</div>
+                <div class="product-price">${p.price} جنيه</div>
+                <div class="product-description">${escapeHtml(truncate(p.description, 120))}</div>
+                <div class="product-buttons">
+                    <button class="product-btn-view" onclick="viewProduct('${p.id}')">عرض</button>
+                    <button class="product-btn-add" onclick="addToCartById('${p.id}')">أضف إلى السلة</button>
+                </div>
+            </div>`;
+        list.appendChild(card);
+    });
+}
+
+function filterByPrice(){
+    const maxPrice = parseInt(document.getElementById('priceFilter').value) || 10000;
+    const products = loadProducts();
+    const list = document.getElementById('productsList');
+    list.innerHTML='';
+    const filtered = products.filter(p=>p.price <= maxPrice);
+    if(!filtered.length){
+        list.innerHTML = '<p>لا توجد منتجات بهذا السعر</p>';
+        return;
+    }
+    filtered.forEach(p=>{
+        const card = document.createElement('div'); card.className='product-card';
+        card.innerHTML = `
+            <div class="product-image-container"><img src="${p.image || ''}" alt="${escapeHtml(p.name)}"></div>
+            <div class="product-info-card">
+                <div class="product-name">${escapeHtml(p.name)}</div>
+                <div class="product-category">${escapeHtml(p.category)}</div>
+                <div class="product-price">${p.price} جنيه</div>
+                <div class="product-description">${escapeHtml(truncate(p.description, 120))}</div>
+                <div class="product-buttons">
+                    <button class="product-btn-view" onclick="viewProduct('${p.id}')">عرض</button>
+                    <button class="product-btn-add" onclick="addToCartById('${p.id}')">أضف إلى السلة</button>
+                </div>
+            </div>`;
+        list.appendChild(card);
+    });
+}
+
+function searchProducts(){
+    const query = document.getElementById('searchInput').value.toLowerCase();
+    const products = loadProducts();
+    const list = document.getElementById('productsList');
+    list.innerHTML='';
+    const filtered = products.filter(p=>
+        p.name.toLowerCase().includes(query) || 
+        p.description.toLowerCase().includes(query) ||
+        p.category.toLowerCase().includes(query)
+    );
+    if(!filtered.length){
+        list.innerHTML = '<p>لم يتم العثور على منتجات</p>';
+        return;
+    }
+    filtered.forEach(p=>{
+        const card = document.createElement('div'); card.className='product-card';
+        card.innerHTML = `
+            <div class="product-image-container"><img src="${p.image || ''}" alt="${escapeHtml(p.name)}"></div>
+            <div class="product-info-card">
+                <div class="product-name">${escapeHtml(p.name)}</div>
+                <div class="product-category">${escapeHtml(p.category)}</div>
+                <div class="product-price">${p.price} جنيه</div>
+                <div class="product-description">${escapeHtml(truncate(p.description, 120))}</div>
+                <div class="product-buttons">
+                    <button class="product-btn-view" onclick="viewProduct('${p.id}')">عرض</button>
+                    <button class="product-btn-add" onclick="addToCartById('${p.id}')">أضف إلى السلة</button>
+                </div>
+            </div>`;
+        list.appendChild(card);
+    });
+}
+
+// SELLER SYSTEM
+function handleSellerLogin(e){
+    e.preventDefault();
+    const email = document.getElementById('sellerLoginEmail').value.trim();
+    const password = document.getElementById('sellerLoginPassword').value.trim();
+    
+    const sellers = JSON.parse(localStorage.getItem(STORAGE_SELLERS) || '[]');
+    const seller = sellers.find(s => s.email === email && s.password === password);
+    
+    if(!seller){
+        return alert('البريد الإلكتروني أو كلمة المرور غير صحيحة');
+    }
+    
+    sessionStorage.setItem(SELLER_SESSION, '1');
+    sessionStorage.setItem(SELLER_ID_KEY, seller.id);
+    document.getElementById('sellerLoginForm').reset();
+    loadSellerDashboard();
+    navigateTo('seller-dashboard');
+}
+
+function logoutSeller(){
+    if(confirm('هل تريد تسجيل الخروج؟')){
+        sessionStorage.removeItem(SELLER_SESSION);
+        sessionStorage.removeItem(SELLER_ID_KEY);
+        navigateTo('home');
+        alert('تم تسجيل الخروج بنجاح');
+    }
+}
+
+function isSellerLoggedIn(){
+    return sessionStorage.getItem(SELLER_SESSION) === '1';
+}
+
+function getCurrentSellerId(){
+    return sessionStorage.getItem(SELLER_ID_KEY);
+}
+
+function getSeller(sellerId){
+    const sellers = JSON.parse(localStorage.getItem(STORAGE_SELLERS) || '[]');
+    return sellers.find(s => s.id === sellerId);
+}
+
+function loadSellerDashboard(){
+    if(!isSellerLoggedIn()) return navigateTo('seller-login');
+    
+    const sellerId = getCurrentSellerId();
+    const seller = getSeller(sellerId);
+    
+    if(!seller) return logoutSeller();
+    
+    document.getElementById('sellerStoreName').textContent = seller.name;
+    document.getElementById('sellerSettingsStoreName').value = seller.name;
+    document.getElementById('sellerSettingsPhone').value = seller.phone;
+    document.getElementById('sellerSettingsEmail').value = seller.email;
+    document.getElementById('sellerSettingsAddress').value = seller.address;
+    
+    renderSellerProducts();
+    renderSellerOrders();
+    updateSellerStats();
+}
+
+function renderSellerProducts(){
+    const sellerId = getCurrentSellerId();
+    const sellerProducts = JSON.parse(localStorage.getItem(STORAGE_SELLER_PRODUCTS) || '{}');
+    const products = sellerProducts[sellerId] || [];
+    const tbody = document.getElementById('sellerProductsList');
+    
+    if(!tbody) return;
+    tbody.innerHTML = '';
+    
+    products.forEach(p => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><img class="product-img-thumb" src="${p.image||''}"/></td>
+            <td>${escapeHtml(p.name)}</td>
+            <td>${p.price} جنيه</td>
+            <td>${escapeHtml(p.category)}</td>
+            <td>${p.stock}</td>
+            <td class="action-buttons-admin">
+                <button class="edit-btn" onclick="editSellerProduct('${p.id}')">تعديل</button>
+                <button class="delete-btn" onclick="deleteSellerProduct('${p.id}')">حذف</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function renderSellerOrders(){
+    const sellerId = getCurrentSellerId();
+    const orders = JSON.parse(localStorage.getItem(STORAGE_ORDERS) || '[]');
+    const sellerProducts = JSON.parse(localStorage.getItem(STORAGE_SELLER_PRODUCTS) || '{}');
+    const myProducts = sellerProducts[sellerId] || [];
+    
+    const tbody = document.getElementById('sellerOrdersList');
+    if(!tbody) return;
+    tbody.innerHTML = '';
+    
+    // Filter orders that contain this seller's products
+    const myOrders = orders.filter(o => 
+        o.items.some(item => myProducts.some(p => p.id === item.id))
+    );
+    
+    myOrders.reverse().forEach(o => {
+        const itemsText = o.items
+            .filter(item => myProducts.some(p => p.id === item.id))
+            .map(item => {
+                const p = myProducts.find(pp => pp.id === item.id) || {};
+                return `${escapeHtml(p.name || '')} x ${item.qty}`;
+            })
+            .join(', ');
+        
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${o.id}</td>
+            <td>${escapeHtml(o.buyer)}</td>
+            <td>${itemsText}</td>
+            <td>${o.subtotal} جنيه</td>
+            <td>${o.status}</td>
+            <td>${new Date(o.createdAt).toLocaleDateString('ar-EG')}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function updateSellerStats(){
+    const sellerId = getCurrentSellerId();
+    const sellerProducts = JSON.parse(localStorage.getItem(STORAGE_SELLER_PRODUCTS) || '{}');
+    const products = sellerProducts[sellerId] || [];
+    const orders = JSON.parse(localStorage.getItem(STORAGE_ORDERS) || '[]');
+    
+    const myOrders = orders.filter(o => 
+        o.items.some(item => products.some(p => p.id === item.id))
+    );
+    
+    const totalSales = myOrders.reduce((sum, o) => sum + o.subtotal, 0);
+    
+    document.getElementById('sellerTotalProducts').textContent = products.length;
+    document.getElementById('sellerTotalOrders').textContent = myOrders.length;
+    document.getElementById('sellerTotalSales').textContent = totalSales + ' جنيه';
+}
+
+function showSellerProductForm(){
+    document.getElementById('sellerProductForm').style.display = 'block';
+}
+
+function hideSellerProductForm(){
+    document.getElementById('sellerProductForm').style.display = 'none';
+}
+
+function handleSellerAddProduct(e){
+    e.preventDefault();
+    const name = document.getElementById('sellerProductName').value.trim();
+    const price = parseFloat(document.getElementById('sellerProductPrice').value) || 0;
+    const category = document.getElementById('sellerProductCategory').value;
+    const description = document.getElementById('sellerProductDescription').value.trim();
+    const stock = parseInt(document.getElementById('sellerProductStock').value) || 0;
+    const file = document.getElementById('sellerProductImage').files[0];
+    const sellerId = getCurrentSellerId();
+    
+    if(!name || !category || !description){
+        return alert('يرجى ملء جميع الحقول المطلوبة');
+    }
+    
+    if(file && file.size > 2*1024*1024){
+        return alert('الصورة كبيرة جداً');
+    }
+    
+    if(file){
+        const reader = new FileReader();
+        reader.onload = function(ev){
+            const img = ev.target.result;
+            saveSellerProduct({name, price, category, description, stock, image: img}, sellerId);
+        };
+        reader.readAsDataURL(file);
+    } else {
+        saveSellerProduct({name, price, category, description, stock, image: ''}, sellerId);
+    }
+}
+
+function saveSellerProduct(product, sellerId){
+    const sellerProducts = JSON.parse(localStorage.getItem(STORAGE_SELLER_PRODUCTS) || '{}');
+    if(!sellerProducts[sellerId]) sellerProducts[sellerId] = [];
+    
+    const id = 'SP' + Date.now();
+    sellerProducts[sellerId].push({id, ...product});
+    localStorage.setItem(STORAGE_SELLER_PRODUCTS, JSON.stringify(sellerProducts));
+    
+    hideSellerProductForm();
+    document.getElementById('sellerAddProductForm').reset();
+    renderSellerProducts();
+    updateSellerStats();
+    alert('تم إضافة المنتج بنجاح');
+}
+
+function editSellerProduct(id){
+    const sellerId = getCurrentSellerId();
+    const sellerProducts = JSON.parse(localStorage.getItem(STORAGE_SELLER_PRODUCTS) || '{}');
+    const products = sellerProducts[sellerId] || [];
+    const p = products.find(x => x.id === id);
+    
+    if(!p) return alert('المنتج غير موجود');
+    
+    const name = prompt('اسم المنتج:', p.name);
+    if(name === null) return;
+    
+    const price = prompt('السعر:', p.price);
+    if(price === null) return;
+    
+    p.name = name;
+    p.price = parseFloat(price) || p.price;
+    
+    const stock = prompt('الكمية:', p.stock);
+    if(stock !== null) p.stock = parseInt(stock) || p.stock;
+    
+    const category = prompt('الفئة:', p.category);
+    if(category !== null) p.category = category;
+    
+    const desc = prompt('وصف المنتج:', p.description);
+    if(desc !== null) p.description = desc;
+    
+    localStorage.setItem(STORAGE_SELLER_PRODUCTS, JSON.stringify(sellerProducts));
+    renderSellerProducts();
+    updateSellerStats();
+    alert('تم تحديث المنتج');
+}
+
+function deleteSellerProduct(id){
+    if(!confirm('هل أنت متأكد من حذف هذا المنتج؟')) return;
+    
+    const sellerId = getCurrentSellerId();
+    const sellerProducts = JSON.parse(localStorage.getItem(STORAGE_SELLER_PRODUCTS) || '{}');
+    sellerProducts[sellerId] = (sellerProducts[sellerId] || []).filter(p => p.id !== id);
+    localStorage.setItem(STORAGE_SELLER_PRODUCTS, JSON.stringify(sellerProducts));
+    renderSellerProducts();
+    updateSellerStats();
+}
+
+function showSellerTab(tab){
+    const tabs = document.querySelectorAll('.seller-tab');
+    tabs.forEach(t => t.classList.remove('active'));
+    const tabBtns = document.querySelectorAll('.seller-tabs .tab-btn');
+    tabBtns.forEach(b => b.classList.remove('active'));
+    
+    const activeTab = document.getElementById('seller-' + tab);
+    if(activeTab) activeTab.classList.add('active');
+    
+    const tabNames = {'products': 'منتجاتي', 'orders': 'طلباتي', 'stats': 'الإحصائيات', 'settings': 'الإعدادات'};
+    const activeBtn = Array.from(tabBtns).find(b => b.textContent.includes(tabNames[tab]));
+    if(activeBtn) activeBtn.classList.add('active');
+    
+    if(tab === 'orders') renderSellerOrders();
+}
+
+function handleSellerSettings(e){
+    e.preventDefault();
+    const sellerId = getCurrentSellerId();
+    const sellers = JSON.parse(localStorage.getItem(STORAGE_SELLERS) || '[]');
+    const sellerIdx = sellers.findIndex(s => s.id === sellerId);
+    
+    if(sellerIdx === -1) return;
+    
+    const name = document.getElementById('sellerSettingsStoreName').value.trim();
+    const phone = document.getElementById('sellerSettingsPhone').value.trim();
+    const email = document.getElementById('sellerSettingsEmail').value.trim();
+    const address = document.getElementById('sellerSettingsAddress').value.trim();
+    const password = document.getElementById('sellerSettingsPassword').value.trim();
+    
+    if(!name || !phone || !email || !address){
+        return alert('يرجى ملء جميع الحقول المطلوبة');
+    }
+    
+    sellers[sellerIdx].name = name;
+    sellers[sellerIdx].phone = phone;
+    sellers[sellerIdx].email = email;
+    sellers[sellerIdx].address = address;
+    if(password) sellers[sellerIdx].password = password;
+    
+    localStorage.setItem(STORAGE_SELLERS, JSON.stringify(sellers));
+    alert('تم تحديث بيانات متجرك بنجاح');
+}
+
+// Update seller registration to save seller account
+function handleSellerFormOriginal(e){
+    e.preventDefault();
+    const name = document.getElementById('sellerName').value.trim();
+    const phone = document.getElementById('sellerPhone').value.trim();
+    const email = document.getElementById('sellerEmail').value.trim();
+    const address = document.getElementById('sellerAddress').value.trim();
+    const category = document.getElementById('sellerCategory').value;
+    const desc = document.getElementById('sellerDescription').value.trim();
+    
+    if(!name || !phone || !email || !address || !category || !desc){
+        return alert('يرجى ملء جميع الحقول');
+    }
+    
+    // Save seller to database
+    const sellers = JSON.parse(localStorage.getItem(STORAGE_SELLERS) || '[]');
+    const sellerId = 'SELLER' + Date.now();
+    const defaultPassword = 'password123'; // default password - user should change it
+    
+    sellers.push({
+        id: sellerId,
+        name,
+        phone,
+        email,
+        address,
+        category,
+        description: desc,
+        password: defaultPassword,
+        createdAt: new Date().toISOString()
+    });
+    
+    localStorage.setItem(STORAGE_SELLERS, JSON.stringify(sellers));
+    
+    // Show WhatsApp message
+    const msg = `طلب انضمام بائع%0Aالاسم: ${encodeURIComponent(name)}%0Aالهاتف: ${encodeURIComponent(phone)}%0Aالبريد: ${encodeURIComponent(email)}%0Aالفئة: ${encodeURIComponent(category)}%0Aالوصف: ${encodeURIComponent(desc)}%0Aالعنوان: ${encodeURIComponent(address)}%0A%0A✅ تم إنشاء حساب البائع:تم حفظه في قاعدة البيانات`;
+    const waUrl = `https://wa.me/${WA_NUMBER}?text=${msg}`;
+    
+    e.target.reset();
+    window.location.href = waUrl;
+    
+    setTimeout(() => {
+        alert(`تم تسجيل حسابك بنجاح!%0Aبريدك: ${email}%0Aكلمة مرورك المؤقتة: ${defaultPassword}%0Aيمكنك تغييرها من الإعدادات بعد الدخول`);
+    }, 500);
 }
 
 // UTIL

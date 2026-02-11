@@ -4,9 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>سودازون - منصة التجارة الإلكترونية السودانية</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=2">
 </head>
 <body>
+    <!-- Version 2 - Fixed missing functions -->
     <!-- Navigation Bar -->
     <nav class="navbar">
         <div class="logo">
@@ -19,6 +20,7 @@
         <div class="nav-links">
             <button onclick="navigateTo('home')" class="nav-btn active">الرئيسية</button>
             <button onclick="navigateTo('seller')" class="nav-btn">بع على سودازون</button>
+            <button onclick="navigateTo('seller-login')" class="nav-btn">دخول البائع</button>
             <button onclick="navigateTo('orders')" class="nav-btn">طلباتي</button>
             <button onclick="navigateTo('admin')" class="nav-btn">التحكم</button>
             <button onclick="toggleCart()" class="nav-btn cart-btn">
@@ -269,6 +271,186 @@
                         إرسال طلب الانضمام
                     </button>
                 </form>
+            </div>
+        </section>
+
+        <!-- Seller Login Page -->
+        <section id="seller-login-page" class="page">
+            <div class="breadcrumb">
+                <button onclick="navigateTo('home')" class="breadcrumb-btn">الرئيسية</button>
+                <span> / </span>
+                <span>دخول البائع</span>
+            </div>
+            <div class="login-container">
+                <h2>دخول لوحة التحكم - البائعين</h2>
+                <form id="sellerLoginForm" class="login-form">
+                    <div class="form-group">
+                        <label for="sellerLoginEmail">البريد الإلكتروني</label>
+                        <input type="email" id="sellerLoginEmail" required placeholder="بريدك الإلكتروني">
+                    </div>
+                    <div class="form-group">
+                        <label for="sellerLoginPassword">كلمة المرور</label>
+                        <input type="password" id="sellerLoginPassword" required placeholder="كلمتك السرية">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">دخول</button>
+                </form>
+                <p style="text-align: center; margin-top: 20px;">
+                    لم تكن لديك حساب؟ <button onclick="navigateTo('seller')" class="link-btn">تسجيل الآن</button>
+                </p>
+            </div>
+        </section>
+
+        <!-- Seller Dashboard Page -->
+        <section id="seller-dashboard-page" class="page">
+            <div class="breadcrumb">
+                <button onclick="navigateTo('home')" class="breadcrumb-btn">الرئيسية</button>
+                <span> / </span>
+                <span>لوحة تحكم البائع</span>
+            </div>
+            <h2>لوحة تحكم متجرك</h2>
+            <div class="seller-dashboard">
+                <div class="seller-header">
+                    <h3 id="sellerStoreName">متجري</h3>
+                    <button onclick="logoutSeller()" class="btn btn-secondary">تسجيل الخروج</button>
+                </div>
+
+                <div class="seller-tabs">
+                    <button onclick="showSellerTab('products')" class="tab-btn active">منتجاتي</button>
+                    <button onclick="showSellerTab('orders')" class="tab-btn">طلباتي</button>
+                    <button onclick="showSellerTab('stats')" class="tab-btn">الإحصائيات</button>
+                    <button onclick="showSellerTab('settings')" class="tab-btn">الإعدادات</button>
+                </div>
+
+                <!-- Products Tab -->
+                <div id="seller-products" class="seller-tab active">
+                    <h3>منتجاتي</h3>
+                    <button onclick="showSellerProductForm()" class="btn btn-primary" style="margin-bottom: 20px;">
+                        + إضافة منتج جديد
+                    </button>
+
+                    <div id="sellerProductForm" class="seller-form" style="display: none;">
+                        <h4>إضافة منتج جديد</h4>
+                        <form id="sellerAddProductForm">
+                            <div class="form-group">
+                                <label for="sellerProductName">اسم المنتج</label>
+                                <input type="text" id="sellerProductName" required placeholder="اسم المنتج">
+                            </div>
+                            <div class="form-group">
+                                <label for="sellerProductPrice">السعر</label>
+                                <input type="number" id="sellerProductPrice" required placeholder="السعر بالجنيه">
+                            </div>
+                            <div class="form-group">
+                                <label for="sellerProductCategory">الفئة</label>
+                                <select id="sellerProductCategory" required>
+                                    <option value="">اختر الفئة</option>
+                                    <option value="إلكترونيات">إلكترونيات</option>
+                                    <option value="ملابس">ملابس</option>
+                                    <option value="كتب">كتب</option>
+                                    <option value="أثاث">أثاث</option>
+                                    <option value="أخرى">أخرى</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="sellerProductDescription">الوصف</label>
+                                <textarea id="sellerProductDescription" required placeholder="وصف المنتج"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="sellerProductStock">الكمية المتوفرة</label>
+                                <input type="number" id="sellerProductStock" required placeholder="الكمية">
+                            </div>
+                            <div class="form-group">
+                                <label for="sellerProductImage">صورة المنتج</label>
+                                <input type="file" id="sellerProductImage" accept="image/*" required>
+                                <small>اقصى حجم: 2MB</small>
+                            </div>
+                            <button type="submit" class="btn btn-primary">حفظ المنتج</button>
+                            <button type="button" class="btn btn-secondary" onclick="hideSellerProductForm()">إلغاء</button>
+                        </form>
+                    </div>
+
+                    <table class="seller-products-table">
+                        <thead>
+                            <tr>
+                                <th>الصورة</th>
+                                <th>الاسم</th>
+                                <th>السعر</th>
+                                <th>الفئة</th>
+                                <th>الكمية</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sellerProductsList">
+                            <!-- Products will be listed here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Orders Tab -->
+                <div id="seller-orders" class="seller-tab">
+                    <h3>طلباتي</h3>
+                    <table class="seller-orders-table">
+                        <thead>
+                            <tr>
+                                <th>رقم الطلب</th>
+                                <th>المشتري</th>
+                                <th>المنتجات</th>
+                                <th>الإجمالي</th>
+                                <th>الحالة</th>
+                                <th>التاريخ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sellerOrdersList">
+                            <!-- Orders will be listed here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Stats Tab -->
+                <div id="seller-stats" class="seller-tab">
+                    <h3>الإحصائيات</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h4>إجمالي المنتجات</h4>
+                            <p id="sellerTotalProducts">0</p>
+                        </div>
+                        <div class="stat-card">
+                            <h4>إجمالي الطلبات</h4>
+                            <p id="sellerTotalOrders">0</p>
+                        </div>
+                        <div class="stat-card">
+                            <h4>إجمالي المبيعات</h4>
+                            <p id="sellerTotalSales">0 جنيه</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings Tab -->
+                <div id="seller-settings" class="seller-tab">
+                    <h3>إعدادات متجري</h3>
+                    <form id="sellerSettingsForm" class="settings-form">
+                        <div class="form-group">
+                            <label for="sellerSettingsStoreName">اسم المتجر</label>
+                            <input type="text" id="sellerSettingsStoreName" required placeholder="اسم متجرك">
+                        </div>
+                        <div class="form-group">
+                            <label for="sellerSettingsPhone">رقم الهاتف</label>
+                            <input type="tel" id="sellerSettingsPhone" required placeholder="رقم هاتفك">
+                        </div>
+                        <div class="form-group">
+                            <label for="sellerSettingsEmail">البريد الإلكتروني</label>
+                            <input type="email" id="sellerSettingsEmail" required placeholder="بريدك الإلكتروني">
+                        </div>
+                        <div class="form-group">
+                            <label for="sellerSettingsAddress">العنوان</label>
+                            <textarea id="sellerSettingsAddress" required placeholder="عنوان متجرك"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="sellerSettingsPassword">كلمة مرور جديدة (اتركها فارغة للعدم تغيير)</label>
+                            <input type="password" id="sellerSettingsPassword" placeholder="كلمة مرور جديدة">
+                        </div>
+                        <button type="submit" class="btn btn-primary">حفظ التغييرات</button>
+                    </form>
+                </div>
             </div>
         </section>
 
@@ -799,6 +981,6 @@
         </div>
     </footer>
 
-    <script src="script.js"></script>
+    <script src="script.js?v=2"></script>
 </body>
 </html>
