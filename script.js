@@ -78,7 +78,20 @@ function capitalize(s){ if(!s) return ''; return s.charAt(0).toUpperCase()+s.sli
 
 // PRODUCTS
 function loadProducts(){
-    return JSON.parse(localStorage.getItem(STORAGE_PRODUCTS) || '[]');
+    // Load admin products
+    const adminProducts = JSON.parse(localStorage.getItem(STORAGE_PRODUCTS) || '[]');
+    
+    // Load seller products from all sellers
+    const sellerProductsData = JSON.parse(localStorage.getItem(STORAGE_SELLER_PRODUCTS) || '{}');
+    let allSellerProducts = [];
+    
+    for(const sellerId in sellerProductsData){
+        const sellerProducts = sellerProductsData[sellerId] || [];
+        allSellerProducts = allSellerProducts.concat(sellerProducts);
+    }
+    
+    // Combine all products
+    return [...adminProducts, ...allSellerProducts];
 }
 
 function saveProducts(products){
