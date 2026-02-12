@@ -985,8 +985,10 @@
 </body>
 </html>
 
+import { useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
+// إعداد Supabase
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -995,10 +997,17 @@ export default function TestConnection() {
   useEffect(() => {
     async function test() {
       const { data, error } = await supabase.from("products").select("*");
-      console.log("DATA:", data);
-      console.log("ERROR:", error);
+      console.log("DATA:", data);   // البيانات من جدول المنتجات
+      console.log("ERROR:", error); // أي خطأ يحدث
     }
     test();
   }, []);
-  return <div>Testing Supabase connection...</div>;
+
+  // إرجاع JSX صالح حتى يظهر في الموقع
+  return (
+    <div>
+      <h1>Testing Supabase Connection</h1>
+      <p>افتح console  دي في المتصفح لترى البيانات</p>
+    </div>
+  );
 }
