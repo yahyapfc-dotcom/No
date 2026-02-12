@@ -851,7 +851,23 @@ function handleSellerFormOriginal(e){
         alert(`تم تسجيل حسابك بنجاح!%0Aبريدك: ${email}%0Aكلمة مرورك المؤقتة: ${defaultPassword}%0Aيمكنك تغييرها من الإعدادات بعد الدخول`);
     }, 500);
 }
+import { createClient } from "@supabase/supabase-js";
 
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+export default function TestConnection() {
+  useEffect(() => {
+    async function test() {
+      const { data, error } = await supabase.from("products").select("*");
+      console.log("DATA:", data);
+      console.log("ERROR:", error);
+    }
+    test();
+  }, []);
+  return <div>Testing Supabase connection...</div>;
+                                         }
 // UTIL
 function loadScriptIfMissing(){ if(!window._soodazonInit){ initApp(); window._soodazonInit = true; } }
 
