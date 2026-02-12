@@ -872,3 +872,31 @@ export default function TestConnection() {
 function loadScriptIfMissing(){ if(!window._soodazonInit){ initApp(); window._soodazonInit = true; } }
 
 window.addEventListener('DOMContentLoaded', ()=>{ try{ loadScriptIfMissing(); }catch(e){ console.error(e); } });
+
+// إعداد Supabase
+const supabaseUrl = "YOUR_SUPABASE_URL";          // ضع Project URL من Supabase
+const supabaseKey = "sb_publishable_cQMT...";     // ضع Publishable API Key
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+// وظيفة لجلب وعرض المنتجات
+async function fetchProducts() {
+  const { data, error } = await supabase.from("products").select("*");
+  if (error) {
+    console.error("Error:", error);
+    return;
+  }
+  
+  const container = document.getElementById("products");
+  container.innerHTML = ""; // تفريغ أي محتوى سابق
+
+  data.forEach(product => {
+    const div = document.createElement("div");
+    div.innerHTML = `
+      <h3>${product.name}</h3>
+      <p>Price: ${product.price}</p>
+      <img src="${product.image_url}" width="150" />
+      <hr/>
+    `;
+    container.appendChild(div);
+  });
+}
